@@ -1,4 +1,5 @@
 import os
+import requests
 from random import choice
 from datetime import datetime
 
@@ -16,7 +17,6 @@ def wake_up(update: Update, context: CallbackContext):
         text=f'Привет, {first_name}!',
         reply_markup=button
     )
-    print('Someone was here', update, '!!!', context)
 
 def mytime(update: Update, context: CallbackContext):
     current_time = datetime.now()
@@ -27,20 +27,40 @@ def mytime(update: Update, context: CallbackContext):
     )
 
 
-def orientation(update: Update, context: CallbackContext):
-    choices = ['Гетеро', 'Гомо', 'Би', 'Что-то непонятное', 'Я люблю струмера!']
-    result = choice(choices)
-    context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text=f'Ваша ориентация, {result}!',
+# def orientation(update: Update, context: CallbackContext):
+#     choices = ['Гетеро', 'Гомо', 'Би', 'Что-то непонятное', 'Я люблю струмера!']
+#     result = choice(choices)
+#     context.bot.send_message(
+#         chat_id=update.effective_chat.id,
+#         text=f'Ваша ориентация, {result}!',
+#         reply_markup=button
+#     )
+
+
+def get_new_dog_image():
+    URL_DOG = os.getenv('URL_DOG')
+    response = requests.get(URL_DOG).json()
+    random_cat = response[0].get('url')
+    return random_cat
+
+def get_new_dog(update: Update, context: CallbackContext):
+    context.bot.send_photo(
+        update.effective_chat.id,
+        get_new_dog_image(),
         reply_markup=button
     )
 
 
-def condensed_milk(update: Update, context: CallbackContext):
-    context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text='Мммм, печенька',
+def get_new_cat_image():
+    URL_CAT = os.getenv('URL_CAT')
+    response = requests.get(URL_CAT).json()
+    random_cat = response[0].get('url')
+    return random_cat
+
+def get_new_cat(update: Update, context: CallbackContext):
+    context.bot.send_photo(
+        update.effective_chat.id,
+        get_new_cat_image(),
         reply_markup=button
     )
 
@@ -62,18 +82,18 @@ def cities(update: Update, context: CallbackContext):
     cities_round(update, context, cities_list)
 
 
-        
-
 def main():
     global button
-    button = ReplyKeyboardMarkup([['Time', 'Сгущенка'],['Orientation', 'Города']])
+    button = ReplyKeyboardMarkup([['Time', 'Пёсики'],['Котики!', 'Города']],
+                                 resize_keyboard=True)
     load_dotenv()
     updater = Updater(token=os.getenv('TOKEN'))
     updater.dispatcher.add_handler(CommandHandler('start', wake_up))
     updater.dispatcher.add_handler(MessageHandler(Filters.regex(r'Time'), mytime))
-    updater.dispatcher.add_handler(MessageHandler(Filters.regex(r'Orientation'), orientation))
-    updater.dispatcher.add_handler(MessageHandler(Filters.regex(r'Сгущенка'), condensed_milk))
+    # updater.dispatcher.add_handler(MessageHandler(Filters.regex(r'Orientation'), orientation))
     updater.dispatcher.add_handler(MessageHandler(Filters.regex(r'Города'), cities))
+    updater.dispatcher.add_handler(MessageHandler(Filters.regex(r'Котики'), get_new_cat))
+    updater.dispatcher.add_handler(MessageHandler(Filters.regex(r'Пёсики'), get_new_dog))
 
     updater.start_polling()
     updater.idle()
